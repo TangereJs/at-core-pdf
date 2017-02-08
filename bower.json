@@ -1,0 +1,9 @@
+{
+  "name": "at-core-pdf",
+  "private": true,
+  "version": "1.0.0.0",
+  "dependencies": {
+    "tangere": "TangereJs/tangere#master",
+    "at-doc-viewer": "TangereJs/at-doc-viewer#master"
+  }
+}

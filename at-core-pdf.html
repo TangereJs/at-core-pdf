@@ -1,0 +1,108 @@
+<link rel="import" href="../tangere/tangere.html">
+
+<script src="scripts/pdfobject.js" charset="utf-8"></script>
+
+
+<dom-module id="at-core-pdf">
+  <template>
+    <style>
+      :host {
+        display: block;
+        box-sizing: border-box;
+      }
+
+      .render-container {
+
+        /*
+          @Define how should pdf render container height be specified / configured ?
+          Posible solutions
+            * hard-coded
+            * css variable
+            * property on at-core-pdf
+        */
+        height: 750px;
+
+        /*
+          @Define how should pdf render container width be specified / configured ?
+          Posible solutions
+            * hard-coded
+            * css variable
+            * property on at-core-pdf
+        */
+        width: 100%;
+
+      }
+    </style>
+    <template is="dom-if" if="{{_browserSupportsPdfEmbeds()}}">
+      <div id="renderContainer" class="render-container"></div>
+    </template>
+    <template is="dom-if" if="{{!_browserSupportsPdfEmbeds()}}">
+      <iframe id="frameRenderer" class="render-container"></iframe>
+    </template>
+  </template>
+  <script>
+    'use strict';
+    Polymer({
+      is: 'at-core-pdf',
+      properties: {
+
+        /*
+          @Define what is the property name for pdf file url
+          * its src right now
+        */
+        src: {
+          type: String,
+          value: "",
+          observer: "_srcChanged"
+        }
+      },
+
+      listeners: {
+        'dom-change': '_handleDomChanged'
+      },
+
+      ready: function () {
+
+      },
+
+      _browserSupportsPdfEmbeds: function () {
+        return window.PDFObject !== undefined && window.PDFObject.supportsPDFs;
+      },
+
+      _handleDomChanged: function (event) {
+        if (window.PDFObject.supportsPDFs) {
+          if (!this.src) { return; }
+          this._renderEmbeddedPdf(this.src);
+        } else {
+          if (!this.src) { return; }
+          this._renderUsingFallback(this.src);
+        }
+      },
+
+      _srcChanged: function (newValue, oldValue) {
+        if (window.PDFObject.supportsPDFs) {
+          this._renderEmbeddedPdf(newValue);
+        } else {
+          this._renderUsingFallback(newValue);
+        }
+      },
+
+      _renderEmbeddedPdf: function (src) {
+        var options = { };
+
+        var renderContainer = this.$$('#renderContainer');
+        if (renderContainer) {
+          PDFObject.embed(src, renderContainer, options);
+        }
+      },
+
+      _renderUsingFallback: function (src) {
+        var frameRenderer = this.$$('#frameRenderer');
+        if (frameRenderer) {
+          frameRenderer.src = "web/viewer.html?file="+src;
+        }
+      }
+
+    });
+  </script>
+</dom-module>
