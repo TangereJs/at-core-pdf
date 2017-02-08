@@ -12,25 +12,7 @@
       }
 
       .render-container {
-
-        /*
-          @Define how should pdf render container height be specified / configured ?
-          Posible solutions
-            * hard-coded
-            * css variable
-            * property on at-core-pdf
-        */
-        height: 750px;
-
-        /*
-          @Define how should pdf render container width be specified / configured ?
-          Posible solutions
-            * hard-coded
-            * css variable
-            * property on at-core-pdf
-        */
-        width: 100%;
-
+        position:  relative;
       }
     </style>
     <template is="dom-if" if="{{_browserSupportsPdfEmbeds()}}">
@@ -46,14 +28,42 @@
       is: 'at-core-pdf',
       properties: {
 
-        /*
-          @Define what is the property name for pdf file url
-          * its src right now
-        */
+        /**
+         * src - uri of the pdf document to be displayed
+         * @property src
+         * @type String
+         * @default ""
+         */
         src: {
           type: String,
           value: "",
           observer: "_srcChanged"
+        },
+
+        /**
+         * aspectRatio - used to dynamically calculate height of the pdf render container based on its width
+         * @property aspectRatio
+         * @type String
+         * @default '16:9'
+         */
+        aspectRatio: {
+          type: String,
+          value: '16:9',
+          xtype: 'enum',
+          xvaluelist: [{
+            title: 'A4',
+            value: 'a4'
+          }, {
+            title: 'Letter',
+            value: 'letter'
+          }, {
+            title: '4:3',
+            value: '4:3'
+          }, {
+            title: '16:9',
+            value: '16:9'
+          }],
+          observer: '_aspectRatioChanged'
         }
       },
 
@@ -88,12 +98,49 @@
       },
 
       _renderEmbeddedPdf: function (src) {
-        var options = { };
-
         var renderContainer = this.$$('#renderContainer');
-        if (renderContainer) {
-          PDFObject.embed(src, renderContainer, options);
-        }
+        if (!renderContainer) { return; }
+
+        var options = { };
+        PDFObject.embed(src, renderContainer, options);
+
+        this._aspectRatioChanged(this.aspectRatio);
+      },
+
+      _aspectRatioChanged: function (newValue, oldValue) {
+        if (!newValue) { return ; }
+
+        var renderContainer = this.$$('#renderContainer') || this.$$('#frameRenderer');
+        if (!renderContainer) { return; }
+
+        var self = this;
+        var renderInterval = setInterval(function() {
+          var rcRect = renderContainer.getBoundingClientRect();
+          var rcWidth = rcRect.width;
+          var calcHeight;
+
+          if (!rcWidth) { return; }
+          clearInterval(renderInterval);
+
+          switch (self.aspectRatio) {
+            case 'a4':
+            // aspect ratio is 210:297
+            calcHeight = Math.ceil((1.0*rcWidth / 210)*297);
+            break;
+            case 'letter':
+            // aspect ratio is 8.5:11
+            calcHeight = Math.ceil((1.0*rcWidth / 8.5)*11);
+            break;
+            case '4:3':
+            calcHeight = Math.ceil((1.0*rcWidth / 4)*3);
+            break;
+            case '16:9':
+            calcHeight = Math.ceil((1.0*rcWidth / 16)*9);
+            break;
+          }
+
+          renderContainer.style.height = calcHeight+'px';
+        }, 100);
       },
 
       _renderUsingFallback: function (src) {
