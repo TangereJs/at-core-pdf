@@ -12,14 +12,14 @@
       }
 
       .render-container {
-        position:  relative;
+        position: relative;
       }
     </style>
     <template is="dom-if" if="{{_browserSupportsPdfEmbeds()}}">
       <div id="renderContainer" class="render-container"></div>
     </template>
     <template is="dom-if" if="{{!_browserSupportsPdfEmbeds()}}">
-      <iframe id="frameRenderer" class="render-container"></iframe>
+      <iframe id="frameRenderer" class="render-container" width="100%"></iframe>
     </template>
   </template>
   <script>
